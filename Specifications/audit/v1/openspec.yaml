@@ -1,0 +1,208 @@
+---
+openapi: 3.0.1
+info:
+  title: Audit
+  version: v1
+servers:
+  - url: https://api.us-west.exabeam.cloud
+  - url: https://api.us-east.exabeam.cloud
+  - url: https://api.sg.exabeam.cloud
+  - url: https://api.jp.exabeam.cloud
+  - url: https://api.eu.exabeam.cloud
+  - url: https://api.au.exabeam.cloud
+  - url: https://api.ca.exabeam.cloud
+security:
+  - oAuth2ClientCredentials: []
+x-readme:
+  explorer-enabled: true
+  proxy-enabled: true
+  samples-languages:
+    - python
+    - powershell
+    - curl
+    - go
+    - javascript
+    - java
+    - cplusplus
+    - csharp
+    - node
+    - node-simple
+paths:
+  "/audit/v1/events":
+    post:
+      tags:
+        - Audit
+      summary: Search audit events
+      description: Quickly perform search queries across multiple years-worth of audit events.
+      operationId: audit-get-events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AuditDetails"
+            examples:
+              Basic:
+                value:
+                  filter: "app:\"Search\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "id"
+                    - "src_ip"
+                    - "product"
+                  startTime: "2023-04-12T13:26:04Z"
+                  endTime: "2023-04-13T13:26:04Z"
+                  limit: 100
+              Group by:
+                value:
+                  filter: "app:\"Search\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "COUNT(1)"
+                    - "id"
+                    - "src_ip"
+                    - "product"
+                  startTime: "2023-04-12T13:26:04Z"
+                  endTime: "2023-04-13T13:26:04Z"
+                  limit: 100
+                  groupBy:
+                    - id
+                    - src_ip
+              Order by:
+                value:
+                  filter: "app:\"Search\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "id"
+                    - "src_ip"
+                  startTime: "2023-04-12T13:26:04Z"
+                  endTime: "2023-04-13T13:26:04Z"
+                  limit: 100
+                  orderBy:
+                    - "src_ip DESC"
+              Distinct:
+                value:
+                  filter: "app:\"Search\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "id"
+                    - "src_ip"
+                  startTime: "2023-04-12T13:26:04Z"
+                  endTime: "2023-04-13T13:26:04Z"
+                  limit: 100
+                  distinct: true
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AuditResultDetails"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiErrors"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiErrors"
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiErrors"
+components:
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: oauth2
+      flows: 
+        clientCredentials: 
+          tokenUrl: auth/v1/token
+          scopes: {}
+  schemas:
+    AuditDetails:
+      type: object
+      required:
+        - fields
+        - startTime
+        - endTime
+      properties:
+        fields:
+          type: array
+          description: List of fields to be returned from the audit search.
+          items:
+            type: string
+        startTime:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC timestamp to start the audit search.
+          example: "2023-04-10T22:17:36.863Z"
+        endTime:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC timestamp to end the audit search.
+          example: "2023-04-10T22:17:36.863Z"
+        limit:
+          type: integer
+          description: Limit the number of events returned from the audit search request.
+          default: 3000
+          format: int64
+        groupBy:
+          type: array
+          description: List of fields to GROUP BY.
+          default: []
+          items:
+            type: string
+        orderBy:
+          type: array
+          description: Order fields by ASC or DESC.
+          default: []
+          items:
+            type: string
+        distinct:
+          type: boolean
+          description: Include or exclude DISTINCT from the SELECT clause.
+          default: false
+        filter:
+          type: string
+          description: Filter for specific audit events.
+    AuditResultDetails:
+      type: object
+      properties:
+        timeStartedMillis:
+          type: integer
+          description: Epoch millisecond timestamp of when the audit search request started.
+          format: int64
+        timeCompletedMillis:
+          type: integer
+          description: Epoch millisecond timestamp of when the audit search request completed.
+          format: int64
+        rows:
+          type: array
+          description: Events found from audit search.
+          items:
+            type: object
+            additionalProperties:
+              type: object
+        totalRows:
+          type: integer
+          description: Total number of events returned from audit search.
+          format: int64
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Http status code.
+        message:
+          type: string
+          description: Error message.
+    ApiErrors:
+      type: object
+      properties:
+        errors:
+          type: array
+          description: Array of ApiError.
+          items:
+            "$ref": "#/components/schemas/ApiError"

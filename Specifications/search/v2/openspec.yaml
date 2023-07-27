@@ -1,0 +1,257 @@
+---
+openapi: 3.0.1
+info:
+  title: Search
+  version: v2
+servers:
+  - url: https://api.us-west.exabeam.cloud
+  - url: https://api.us-east.exabeam.cloud
+  - url: https://api.sg.exabeam.cloud
+  - url: https://api.jp.exabeam.cloud
+  - url: https://api.eu.exabeam.cloud
+  - url: https://api.au.exabeam.cloud
+  - url: https://api.ca.exabeam.cloud
+security:
+  - oAuth2ClientCredentials: []
+paths:
+  "/search/v2/events":
+    post:
+      tags:
+        - Search
+      summary: Search for events
+      description: Quickly perform search queries across multiple years-worth of logs and events.
+      operationId: search
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SearchDetails"
+            examples:
+              Basic:
+                value:
+                  filter: "id:\"123\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "id"
+                    - "src_ip"
+                    - "product"
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-04-18T18:23:10Z"
+                  limit: 100
+              Group by:
+                value:
+                  filter: "id:\"123\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "COUNT(1)"
+                    - "id"
+                    - "src_ip"
+                    - "product"
+                  startTime: "2022-10-17T23:59:10Z"
+                  endTime: "2022-10-18T21:53:10Z"
+                  limit: 100
+                  groupBy:
+                    - id
+                    - src_ip
+                    - product
+              Order by:
+                value:
+                  filter: "id:\"123\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "id"
+                    - "src_ip"
+                    - "product"
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-04-18T18:23:10Z"
+                  limit: 100
+                  orderBy:
+                    - "src_ip DESC"
+              Distinct:
+                value:
+                  filter: "id:\"123\" AND src_ip:\"00.00.000.000\""
+                  fields:
+                    - "id"
+                    - "src_ip"
+                    - "product"
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-04-18T18:23:10Z"
+                  limit: 100
+                  distinct: true
+              Context Search:
+                value:
+                  filter: "id IN \"Context_Table\""
+                  fields:
+                    - "id"
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-04-18T18:23:10Z"
+                  limit: 100
+              Aggregation:
+                value:
+                  filter: "id:\"123\""
+                  fields:
+                    - "id"
+                    - "COUNT(product)"
+                  groupBy:
+                    - id
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-01-22T18:23:10Z"
+                  limit: 100
+              Field Summary:
+                value:
+                  filter: ""
+                  fields:
+                    - "product"
+                    - "COUNT(product) as product_count"
+                  groupBy:
+                    - product
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-02-11T18:23:10Z"
+                  limit: 100
+              Full Event Detail:
+                value:
+                  filter: "id:\"123\""
+                  fields:
+                    - "*"
+                  startTime: "2023-01-17T23:59:10Z"
+                  endTime: "2023-03-18T18:23:10Z"
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SearchResultDetails"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiErrors"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiErrors"
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiErrors"
+components:
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: oauth2
+      flows: 
+        clientCredentials: 
+          tokenUrl: auth/v1/token
+          scopes: {}
+  schemas:
+    SearchDetails:
+      type: object
+      required:
+        - filter
+        - fields
+        - startTime
+        - endTime
+      properties:
+        fields:
+          type: array
+          description: List of fields to be returned from the search.
+          items:
+            type: string
+        fromTimeMillis:
+          type: integer
+          description: Epoch millisecond timestamp to start the search.
+          format: int64
+          deprecated: true
+        endTimeMillis:
+          type: integer
+          description: Epoch millisecond timestamp to end the search.
+          format: int64
+          deprecated: true
+        startTime:
+          type: string
+          description: Timestamp to start the search.
+          format: date-time
+        endTime:
+          type: string
+          description: Timestamp to end the search.
+          format: date-time
+        limit:
+          type: integer
+          description: Limit the number of events returned from the search request.
+          default: 3000
+          format: int64
+        groupBy:
+          type: array
+          description: List of fields to GROUP BY.
+          default: []
+          items:
+            type: string
+        orderBy:
+          type: array
+          description: Order fields by ASC or DESC.
+          default: []
+          items:
+            type: string
+        distinct:
+          type: boolean
+          description: Include or exclude DISTINCT from the SELECT clause.
+          default: false
+        filter:
+          type: string
+          description: Filter for specific events.
+    SearchResultDetails:
+      type: object
+      properties:
+        timeStartedMillis:
+          type: integer
+          description: Epoch millisecond timestamp of when the search request started.
+          format: int64
+        timeCompletedMillis:
+          type: integer
+          description: Epoch millisecond timestamp of when the search request completed.
+          format: int64
+        rows:
+          type: array
+          description: Events found from search.
+          items:
+            type: object
+            additionalProperties:
+              type: object
+        totalRows:
+          type: integer
+          description: Total number of events returned from search.
+          format: int64
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Http status code.
+        message:
+          type: string
+          description: Error message.
+    ApiErrors:
+      type: object
+      properties:
+        errors:
+          type: array
+          description: Array of ApiError.
+          items:
+            "$ref": "#/components/schemas/ApiError"
+x-readme:
+  explorer-enabled: true
+  proxy-enabled: false
+  samples-languages:
+    - python
+    - powershell
+    - curl
+    - go
+    - javascript
+    - java
+    - cplusplus
+    - csharp
+    - node
+    - node-simple

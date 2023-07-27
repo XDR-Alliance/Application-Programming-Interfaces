@@ -1,0 +1,105 @@
+---
+openapi: 3.0.1
+info:
+  title: Authentication
+  version: v1
+servers:
+  - url: https://api.us-west.exabeam.cloud
+  - url: https://api.us-east.exabeam.cloud
+  - url: https://api.sg.exabeam.cloud
+  - url: https://api.jp.exabeam.cloud
+  - url: https://api.eu.exabeam.cloud
+  - url: https://api.au.exabeam.cloud
+  - url: https://api.ca.exabeam.cloud
+paths:
+  "/auth/v1/token":
+    post:
+      tags:
+        - Identity and Access
+      summary: Get access token 
+      description: OAuth 2.0 Client Credential grant is used when applications request an access token to access their own resources, not on behalf of a user.
+      operationId: get-access-token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/client_credential"
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/token_response"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/invalid_request"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/invalid_request"
+components:
+  schemas:
+    client_credential:
+      type: object
+      required:
+        - client_id
+        - client_secret
+        - grant_type
+      properties:
+        client_id:
+          type: string
+          description: API Key.
+          format: password
+        client_secret:
+          type: string
+          description: API Key Secret.
+          format: password
+        grant_type:
+          type: string
+          description: The grant_type parameter must be set to "client_credentials". 
+          default: client_credentials
+    invalid_request:
+      type: object
+      properties:
+        error:
+          type: string
+        error_description:
+          type: string
+    token_response:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: The access token string as issued by the authorization server.
+        token_type:
+          type: string
+          description: The type of token this is, typically just the string “Bearer”.
+        expires_in:
+          type: integer
+          description: The lifetime in seconds of the access token.
+          format: int32
+x-readme:
+  explorer-enabled: true
+  proxy-enabled: true
+  samples-languages:
+    - python
+    - powershell
+    - curl
+    - go
+    - javascript
+    - java
+    - cplusplus
+    - csharp
+    - node
+    - node-simple
