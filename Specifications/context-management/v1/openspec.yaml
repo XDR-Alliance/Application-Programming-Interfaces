@@ -1,0 +1,1450 @@
+openapi: 3.1.0
+info:
+  title: Context
+  version: v1
+servers:
+  - url: https://api.us-west.exabeam.cloud
+  - url: https://api.us-east.exabeam.cloud
+  - url: https://api.sg.exabeam.cloud
+  - url: https://api.jp.exabeam.cloud
+  - url: https://api.eu.exabeam.cloud
+  - url: https://api.au.exabeam.cloud
+  - url: https://api.ca.exabeam.cloud
+paths:
+  /context-collectors/v1/collectors:
+    get:
+      tags:
+        - Context Collectors
+      summary: Get metadata for all existing context collectors.
+      description: |
+        Retrieve metadata for all existing context collectors, including source, operational status, and attribute mapping.
+
+        Note: Context Collector APIs are being renamed as Context Management APIs. All of the context API endpoints are now available in the Context Management folder. The Context Collector folder is deprecated and will no longer be published after 31-OCT-2023. For this specific endpoint, see Context Management/v1/tables.
+      operationId: getContext-collectorsV1Collectors
+      responses:
+        '200':
+          description: Returns a list of metadata for each existing context collector.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collector'
+              example:
+                - attributeMapping:
+                    - sourceAttribute: employeeId
+                      targetAttributeId: user_id_rt24s4g8
+                    - sourceAttribute: commonName
+                      targetAttributeId: emp_name_l8PFJfsH
+                    - sourceAttribute: email
+                      targetAttributeId: email_qopYfK7M
+                  attributes:
+                    - displayName: User ID
+                      id: user_id_rt24s4g8
+                      isKey: true
+                      type: string
+                    - displayName: Employee Name
+                      id: emp_name_l8PFJfsH
+                      isKey: false
+                      type: string
+                    - displayName: Email
+                      id: email_qopYfK7M
+                      isKey: false
+                      type: string
+                  contextType: Other
+                  id: EiC5olOacm
+                  lastUpdated: 1676018946
+                  name: Public API Example
+                  source: Custom
+                  status: RUNNING
+                  totalItems: 10
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      deprecated: true
+  /context-collectors/v1/collectors/{id}:
+    get:
+      tags:
+        - Context Collectors
+      summary: Get metadata for a single context collector.
+      description: |
+        Retrieve metadata for a specific context collector, including source, operational status, and attribute mapping.
+
+        Note: Context Collector APIs are being renamed as Context Management APIs. All of the context API endpoints are now available in the Context Management folder. The Context Collector folder is deprecated and will no longer be published after 31-OCT-2023. For this specific endpoint, see Context Management/v1/tables/{id}.
+      operationId: getContext-collectorsV1CollectorsId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the metadata for the specified context collector.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collector'
+              example:
+                attributeMapping:
+                  - sourceAttribute: employeeId
+                    targetAttributeId: user_id_rt24s4g8
+                  - sourceAttribute: commonName
+                    targetAttributeId: emp_name_l8PFJfsH
+                  - sourceAttribute: email
+                    targetAttributeId: email_qopYfK7M
+                attributes:
+                  - displayName: User ID
+                    id: user_id_rt24s4g8
+                    isKey: true
+                    type: string
+                  - displayName: Employee Name
+                    id: emp_name_l8PFJfsH
+                    isKey: false
+                    type: string
+                  - displayName: Email
+                    id: email_qopYfK7M
+                    isKey: false
+                    type: string
+                contextType: Other
+                id: EiC5olOacm
+                lastUpdated: 1676018946
+                name: Public API Example
+                source: Custom
+                status: RUNNING
+                totalItems: 10
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      deprecated: true
+  /context-collectors/v1/collectors/uploadStatus/{trackerId}:
+    get:
+      tags:
+        - Context Collectors
+      summary: Track collector ingestion progress.
+      description: |
+        Use the tracker ID from one of the Post APIs to poll the status of an add entries job.
+
+        Note: Context Collector APIs are being renamed as Context Management APIs. All of the context API endpoints are now available in the Context Management folder. The Context Collector folder is deprecated and will no longer be published after 31-OCT-2023. For this specific endpoint, see Context Management/v1/tables/uploadStatus/{trackerId}.
+      operationId: getContext-collectorsV1CollectorsUploadstatusTrackerid
+      parameters:
+        - name: trackerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Returns the status of the specified upload job. Status values
+            are: "Pending", "In Progress", or "Complete".'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectorUploadStatus'
+              example:
+                totalErrors: 10
+                totalUploaded: 100
+                uploadStatus: inProgress
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      deprecated: true
+  /context-collectors/v1/collectors/{collectorId}/addEntriesFromCsv:
+    post:
+      tags:
+        - Context Collectors
+      summary: Add context records to an existing collector from a CSV file.
+      description: |-
+        Add context data records to an existing collector using a CSV file. The CSV file must contain a header row with column names for the attributes you want to map.
+        File size can be a maximum of 300 MB or 500,000 records. If the CSV file exceeds these limits, compress it as a ZIP file. A compressed ZIP file must contain only one CSV file.
+        Use the value of the "operation" parameter to "append" the added data or "replace" the existing data.
+
+        Note: Context Collector APIs are being renamed as Context Management APIs. All of the context API endpoints are now available in the Context Management folder. The Context Collector folder is deprecated and will no longer be published after 31-OCT-2023. For this specific endpoint, see Context Management/v1/tables/{tableId}/addRecordsFromCsv.
+      operationId: postContext-collectorsV1CollectorsCollectoridAddentriesfromcsv
+      parameters:
+        - name: collectorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CollectorUploadRequestForm'
+        required: true
+      responses:
+        '200':
+          description: Returns information about the uploaded records. The response
+            includes a tracker ID that can be used to poll the ingestion progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectorUploadCsvResponse'
+              example:
+                csvEntries: 1000
+                totalDuplicates: 100
+                totalIgnoredMissingKey: 10
+                trackerId: fbbc124ada3c4ffa94c3c60457512dd3
+        '400':
+          description: Invalid value in the header Content-Length or the request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+      deprecated: true
+  /context-collectors/v1/collectors/{collectorId}/addEntries:
+    post:
+      tags:
+        - Context Collectors
+      summary: Add context records to an existing collector.
+      description: |-
+        Add one or more context data records directly to an existing collector by including them in the request body.
+        Use the value of the "operation" parameter to "append" the added data or "replace" the existing data.
+
+        Note: Context Collector APIs are being renamed as Context Management APIs. All of the context API endpoints are now available in the Context Management folder. The Context Collector folder is deprecated and will no longer be published after 31-OCT-2023. For this specific endpoint, see Context Management/v1/tables/{tableId}/addRecords.
+      operationId: postContext-collectorsV1CollectorsCollectoridAddentries
+      parameters:
+        - name: collectorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectorUploadRequest'
+            example:
+              data:
+                - xym85GfP: John
+                  GsqqBM5h: Doe
+                  EiC5olOacm: email1@server.com
+                - xym85GfP: Jane
+                  GsqqBM5h: Smith
+                  EiC5olOacm: email2@server.com
+              operation: append
+        required: true
+      responses:
+        '200':
+          description: Returns information about the uploaded records. The response
+            includes a tracker ID that can be used to poll the ingestion progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectorUploadJsonResponse'
+              example:
+                jsonEntries: 1000
+                totalDuplicates: 100
+                totalIgnoredMissingKey: 10
+                trackerId: fbbc124ada3c4ffa94c3c60457512dd3
+        '400':
+          description: Invalid value in the header Content-Length or the request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+      deprecated: true
+  /context-management/v1/tables:
+    get:
+      tags:
+        - Context Management
+      summary: Get metadata for all existing context tables.
+      description: Retrieve metadata for all existing context tables, including source,
+        operational status, and attribute mapping.
+      operationId: getContext-managementV1Tables
+      responses:
+        '200':
+          description: Returns a list of metadata for each existing context table.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+              example:
+                - attributeMapping:
+                    - sourceAttribute: employeeId
+                      targetAttributeId: user_id_rt24s4g8
+                    - sourceAttribute: commonName
+                      targetAttributeId: emp_name_l8PFJfsH
+                    - sourceAttribute: email
+                      targetAttributeId: email_qopYfK7M
+                  attributes:
+                    - displayName: User ID
+                      id: user_id_rt24s4g8
+                      isKey: true
+                      type: string
+                    - displayName: Employee Name
+                      id: emp_name_l8PFJfsH
+                      isKey: false
+                      type: string
+                    - displayName: Email
+                      id: email_qopYfK7M
+                      isKey: false
+                      type: string
+                  contextType: Other
+                  id: EiC5olOacm
+                  lastUpdated: 1676018946
+                  name: Public API Example
+                  source: Custom
+                  status: RUNNING
+                  totalItems: 10
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    post:
+      tags:
+        - Context Management
+      summary: Create a context table with metadata.
+      description: Create a new custom context table (only CUSTOM table creation is
+        supported) with attributes that represent the schema of the new table. You
+        can either create new attributes, by providing new names, or reuse existing
+        attributes, by providing their IDs. Attribute IDs can be retrieved using the
+        get attributes API. Use isKey to signify which attribute is the key. There
+        can be only a single key attribute in a table.
+      operationId: postContext-managementV1Tables
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableCreateDto'
+            examples:
+              Custom Context Type:
+                value:
+                  attributes:
+                    - displayName: Custom Attribute
+                      isKey: false
+                    - id: id_of_existing_attribute
+                      isKey: true
+                  contextType: Other
+                  name: Example Custom table of type Other
+                  source: Custom
+              User Context Type:
+                value:
+                  attributes:
+                    - displayName: New Attribute for User
+                      isKey: false
+                    - id: id_of_existing_attribute
+                      isKey: true
+                  contextType: User
+                  name: Example Custom table of type User
+                  source: Custom
+        required: true
+      responses:
+        '201':
+          description: Returns the metadata and a URL for the created context table.
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableWithUrl'
+              example:
+                table:
+                  attributeMapping:
+                    - sourceAttribute: employeeId
+                      targetAttributeId: user_id_rt24s4g8
+                    - sourceAttribute: commonName
+                      targetAttributeId: emp_name_l8PFJfsH
+                    - sourceAttribute: email
+                      targetAttributeId: email_qopYfK7M
+                  attributes:
+                    - displayName: User ID
+                      id: user_id_rt24s4g8
+                      isKey: true
+                      type: string
+                    - displayName: Employee Name
+                      id: emp_name_l8PFJfsH
+                      isKey: false
+                      type: string
+                    - displayName: Email
+                      id: email_qopYfK7M
+                      isKey: false
+                      type: string
+                  contextType: Other
+                  id: EiC5olOacm
+                  lastUpdated: 1676018946
+                  name: Public API Example
+                  source: Custom
+                  status: RUNNING
+                  totalItems: 10
+                url: https://example.com/context-management/v1/tables/EiC5olOacm
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+  /context-management/v1/tables/{id}:
+    get:
+      tags:
+        - Context Management
+      summary: Get metadata for a single context table.
+      description: Retrieve metadata for a specific context table, including source,
+        operational status, and attribute mapping.
+      operationId: getContext-managementV1TablesId
+      parameters:
+        - name: id
+          in: path
+          description: Specify the ID of an existing context table
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the metadata for the specified context table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+              example:
+                attributeMapping:
+                  - sourceAttribute: employeeId
+                    targetAttributeId: user_id_rt24s4g8
+                  - sourceAttribute: commonName
+                    targetAttributeId: emp_name_l8PFJfsH
+                  - sourceAttribute: email
+                    targetAttributeId: email_qopYfK7M
+                attributes:
+                  - displayName: User ID
+                    id: user_id_rt24s4g8
+                    isKey: true
+                    type: string
+                  - displayName: Employee Name
+                    id: emp_name_l8PFJfsH
+                    isKey: false
+                    type: string
+                  - displayName: Email
+                    id: email_qopYfK7M
+                    isKey: false
+                    type: string
+                contextType: Other
+                id: EiC5olOacm
+                lastUpdated: 1676018946
+                name: Public API Example
+                source: Custom
+                status: RUNNING
+                totalItems: 10
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /context-management/v1/tables/uploadStatus/{trackerId}:
+    get:
+      tags:
+        - Context Management
+      summary: Track ingestion progress.
+      description: Use the tracker ID from one of the Post APIs to poll the status
+        of an add records job.
+      operationId: getContext-managementV1TablesUploadstatusTrackerid
+      parameters:
+        - name: trackerId
+          in: path
+          description: Specify the tracker ID from an upload request whose progress
+            you want to track
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Returns the status of the specified upload job. Status values
+            are: "Pending", "In Progress", or "Complete".'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableUploadStatus'
+              example:
+                totalErrors: 10
+                totalUploaded: 100
+                uploadStatus: inProgress
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /context-management/v1/attributes/{contextType}:
+    get:
+      tags:
+        - Context Management
+      summary: Get the available attributes for a specific table type.
+      description: Retrieve all of the available attributes for a specific type of
+        context table.
+      operationId: getContext-managementV1AttributesContexttype
+      parameters:
+        - name: contextType
+          in: path
+          description: Specify the type of context table for which you want to retrieve
+            the available attributes
+          required: true
+          schema:
+            $ref: '#/components/schemas/TableContextType'
+          examples:
+            TI Domains:
+              value: TI_domains
+            TI IPs:
+              value: TI_ips
+            User:
+              value: User
+            Other:
+              value: Other
+      responses:
+        '200':
+          description: Returns the available attributes for the specified table type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attributes'
+              example:
+                attributes:
+                  - displayName: User
+                    id: u_user
+                    type: string
+                  - displayName: Created At
+                    format: \d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)
+                    id: created_at
+                    type: timestamp
+                  - displayName: Access Status
+                    format: AccountExpired|AccountDisabled|AccountActive|AccountLockout|PasswordExpired
+                    id: u_user_access_status
+                    type: enum
+        '400':
+          description: 'Invalid value, Invalid value for: path parameter contextType'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /context-management/v1/tables/{id}/records:
+    get:
+      tags:
+        - Context Management
+      summary: Get table records by ID.
+      description: Retrieve the records for a specific context table.
+      operationId: getContext-managementV1TablesIdRecords
+      parameters:
+        - name: id
+          in: path
+          description: An ID for the specified table
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The number of records to return per page
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: offset
+          in: query
+          description: The number of rows to skip before beginning to return records
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Returns the records in the specified context table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordsListDto'
+              example:
+                paging:
+                  count: 3
+                  limit: 25
+                  next: []
+                  offset: 0
+                  pages: 1
+                  prev: []
+                records:
+                  - attr_1: '1111'
+                    attr_11: attr_val_1
+                  - attr_2: '2222'
+                    attr_22: attr_val_2
+                  - attr_3: '3333'
+                    attr_33: attr_val_3
+        '400':
+          description: 'Invalid value, Invalid value for: query parameter limit, Invalid
+            value for: query parameter offset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /context-management/v1/tables/{id}/addRecordsFromCsv:
+    post:
+      tags:
+        - Context Management
+      summary: Add context records to an existing table from a CSV file.
+      description: |-
+        Add context records to an existing table using a CSV file. The CSV file must contain a header row with column names for the attributes you want to map.
+        File size can be a maximum of 300 MB or 500,000 records. If the CSV file exceeds these limits, compress it as a ZIP file. A compressed ZIP file must contain only one CSV file.
+        Use the value of the "operation" parameter to "append" the added data or "replace" the existing data.
+      operationId: postContext-managementV1TablesIdAddrecordsfromcsv
+      parameters:
+        - name: id
+          in: path
+          description: Specify the ID of an existing context table
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The body parameters for this request must include a set of 'Source
+          Attributes' as defined in the header row of the CSV file, and a set of the
+          corresponding 'Target Attributes'. It must include an 'Operation' to indicate
+          how to handle the records from the CSV file. Options include 'append', which
+          adds new records to the existing records, or 'replace', which replaces the
+          existing records. The final body parameter requirement is to select the
+          CSV file itself.
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TableUploadRequestForm'
+        required: true
+      responses:
+        '200':
+          description: Returns information about the uploaded records. The response
+            includes a tracker ID that can be used to poll the ingestion progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableUploadCsvResponse'
+              example:
+                csvEntries: 1000
+                totalDuplicates: 100
+                totalIgnoredMissingKey: 10
+                trackerId: fbbc124ada3c4ffa94c3c60457512dd3
+        '400':
+          description: Invalid value in the header Content-Length or the request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+  /context-management/v1/tables/{id}/addRecords:
+    post:
+      tags:
+        - Context Management
+      summary: Add context records to an existing table.
+      description: |-
+        Add one or more context records directly to an existing table by including them in the request body.
+        Use the value of the "operation" parameter to "append" the added data or "replace" the existing data.
+      operationId: postContext-managementV1TablesIdAddrecords
+      parameters:
+        - name: id
+          in: path
+          description: Specify the ID of an existing context table
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: 'This request body requires IDs for the ''First Name'', ''Last
+          Name'', and ''E-mail'' fields. These IDs can be obtained from the response
+          returned by the following API that retrieves attributes for a specific type
+          of context table: Context Management/v1/attributes/{contextType}'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableUploadRequest'
+            examples:
+              Append Example:
+                value:
+                  data:
+                    - xym85GfP: John
+                      GsqqBM5h: Doe
+                      EiC5olOacm: email1@server.com
+                    - xym85GfP: Jane
+                      GsqqBM5h: Smith
+                      EiC5olOacm: email2@server.com
+                  operation: append
+        required: true
+      responses:
+        '200':
+          description: Returns information about the uploaded records. The response
+            includes a tracker ID that can be used to poll the ingestion progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableUploadJsonResponse'
+              example:
+                jsonEntries: 1000
+                totalDuplicates: 100
+                totalIgnoredMissingKey: 10
+                trackerId: fbbc124ada3c4ffa94c3c60457512dd3
+        '400':
+          description: Invalid value in the header Content-Length or the request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+components:
+  schemas:
+    AddExistingAttribute:
+      title: Add Existing Attribute
+      required:
+        - id
+        - isKey
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the attribute
+        isKey:
+          type: boolean
+          description: Indicates whether the attribute is a key for the table
+      description: JSON schema for creating an attribute
+    AttributeDto:
+      required:
+        - id
+        - displayName
+        - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: Field ID
+        displayName:
+          type: string
+          description: Attribute display name
+        type:
+          type: string
+          description: Attribute data type
+        format:
+          type: string
+          description: Attribute data format
+      description: Table attribute
+    Attributes:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeDto'
+          description: Ordered list of table attributes
+      description: Table attributes
+    Collector:
+      required:
+        - id
+        - name
+        - contextType
+        - source
+        - totalItems
+      type: object
+      properties:
+        id:
+          type: string
+          description: Collector ID
+        name:
+          type: string
+          description: Collector display name
+        contextType:
+          type: string
+          description: Context type
+        source:
+          type: string
+          description: Source of collector data
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectorFieldDef'
+          description: Collector metadata attributes
+        attributeMapping:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectorAttributeMapping'
+          description: Mapping of source to target collector attributes
+        totalItems:
+          type: integer
+          description: Number of data objects in the collector
+          format: int64
+        status:
+          type: string
+          description: Collector status
+        lastUpdated:
+          type: string
+          description: Last updated time
+          format: date-time
+      description: Collector information
+    CollectorAttributeMapping:
+      required:
+        - sourceAttribute
+        - targetAttributeId
+      type: object
+      properties:
+        sourceAttribute:
+          type: string
+          description: Source attribute
+        targetAttributeId:
+          type: string
+          description: Target attribute
+      description: Schema for mapping collector attributes from source to target
+    CollectorFieldDef:
+      required:
+        - id
+        - displayName
+        - type
+        - isKey
+      type: object
+      properties:
+        id:
+          type: string
+          description: Field ID
+        displayName:
+          type: string
+          description: Field display name
+        type:
+          type: string
+          description: Field data type
+        isKey:
+          type: boolean
+          description: Indicates whether the field is a key for the collector
+      description: Schema for the collector metadata
+    CollectorFileUploadRequest:
+      required:
+        - operation
+      type: object
+      properties:
+        attributeMapping:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectorUploadAttributeMapping'
+          description: Mapping of source to target collector attributes
+        operation:
+          $ref: '#/components/schemas/CollectorUploadOperation'
+      description: Collector file upload request
+    CollectorUploadAttributeMapping:
+      required:
+        - sourceAttribute
+        - targetAttributeId
+      type: object
+      properties:
+        sourceAttribute:
+          type: string
+          description: Source attribute
+        targetAttributeId:
+          type: string
+          description: Target attribute
+      description: Schema for mapping attributes from source to target during a collector
+        file upload
+    CollectorUploadCsvResponse:
+      required:
+        - trackerId
+        - csvEntries
+        - totalDuplicates
+        - totalIgnoredMissingKey
+      type: object
+      properties:
+        trackerId:
+          type: string
+          description: Tracker ID for an upload operation
+        csvEntries:
+          type: integer
+          description: Number of data objects uploaded
+          format: int64
+        totalDuplicates:
+          type: integer
+          description: Number of duplicates
+          format: int64
+        totalIgnoredMissingKey:
+          type: integer
+          description: Number of malformed objects
+          format: int64
+      description: Response schema for a collector CSV file upload
+    CollectorUploadJsonResponse:
+      required:
+        - trackerId
+        - jsonEntries
+        - totalDuplicates
+        - totalIgnoredMissingKey
+      type: object
+      properties:
+        trackerId:
+          type: string
+          description: Tracker ID for an upload operation
+        jsonEntries:
+          type: integer
+          description: Number of JSON entries
+          format: int64
+        totalDuplicates:
+          type: integer
+          description: Number of duplicates
+          format: int64
+        totalIgnoredMissingKey:
+          type: integer
+          description: Number of malformed objects
+          format: int64
+      description: Response schema for a collector JSON upload
+    CollectorUploadOperation:
+      type: string
+      description: Options for how data should be uploaded to an existing collector
+      enum:
+        - append
+        - replace
+    CollectorUploadRequest:
+      required:
+        - operation
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Map_String'
+          description: String data
+        operation:
+          $ref: '#/components/schemas/CollectorUploadOperation'
+      description: Schema for a collector upload request
+    CollectorUploadRequestForm:
+      required:
+        - body
+        - file
+      type: object
+      properties:
+        body:
+          $ref: '#/components/schemas/CollectorFileUploadRequest'
+        file:
+          type: string
+          description: CSV file
+          format: binary
+      description: Schema for a collector CSV upload request form
+    CollectorUploadStatus:
+      required:
+        - uploadStatus
+        - totalUploaded
+        - totalErrors
+      type: object
+      properties:
+        uploadStatus:
+          $ref: '#/components/schemas/UploadStatus'
+        totalUploaded:
+          type: integer
+          description: Total uploaded
+          format: int64
+        totalErrors:
+          type: integer
+          description: Total errors
+          format: int64
+      description: Response schema for a track ingestion request
+    ContextValue:
+      oneOf:
+        - $ref: '#/components/schemas/DoubleContextValue'
+        - $ref: '#/components/schemas/FalseBoolContextValue'
+        - $ref: '#/components/schemas/ListContextValue'
+        - $ref: '#/components/schemas/LongContextValue'
+        - $ref: '#/components/schemas/MapContextValue'
+        - $ref: '#/components/schemas/NullContextValue'
+        - $ref: '#/components/schemas/StringContextValue'
+        - $ref: '#/components/schemas/TimestampContextValue'
+        - $ref: '#/components/schemas/TrueBoolContextValue'
+    CreateAttribute:
+      oneOf:
+        - $ref: '#/components/schemas/AddExistingAttribute'
+        - $ref: '#/components/schemas/CreateNewAttribute'
+    CreateNewAttribute:
+      title: Create New Attribute
+      required:
+        - displayName
+        - isKey
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: Attribute display name
+        isKey:
+          type: boolean
+          description: Indicates whether the attribute is a key for the table
+      description: JSON schema for creating an attribute
+    DoubleContextValue:
+      required:
+        - doubleValue
+      type: object
+      properties:
+        doubleValue:
+          type: number
+          format: double
+    FalseBoolContextValue:
+      type: object
+    ListContextValue:
+      type: object
+      properties:
+        listValue:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextValue'
+    LongContextValue:
+      required:
+        - longValue
+      type: object
+      properties:
+        longValue:
+          type: integer
+          format: int64
+    MapContextValue:
+      required:
+        - mapValue
+      type: object
+      properties:
+        mapValue:
+          $ref: '#/components/schemas/Map_ContextValue'
+    Map_ContextValue:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/ContextValue'
+    NullContextValue:
+      type: object
+    PaginationDto:
+      required:
+        - limit
+        - offset
+        - pages
+        - count
+      type: object
+      properties:
+        next:
+          type: array
+          items:
+            type: string
+        prev:
+          type: array
+          items:
+            type: string
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+        pages:
+          type: integer
+          format: int32
+        count:
+          type: integer
+          format: int32
+      description: Pagination
+    RecordsListDto:
+      required:
+        - paging
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Map_ContextValue'
+          description: Context records
+        paging:
+          $ref: '#/components/schemas/PaginationDto'
+      description: Table Data Items List
+    StringContextValue:
+      required:
+        - stringValue
+      type: object
+      properties:
+        stringValue:
+          type: string
+    Table:
+      required:
+        - id
+        - name
+        - contextType
+        - source
+        - totalItems
+      type: object
+      properties:
+        id:
+          type: string
+          description: Table ID
+        name:
+          type: string
+          description: Table display name
+        contextType:
+          type: string
+          description: Context type
+        source:
+          type: string
+          description: Source of table data
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableFieldDef'
+          description: Table metadata attributes
+        attributeMapping:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableAttributeMapping'
+          description: Mapping of source to target table attributes
+        totalItems:
+          type: integer
+          description: Number of data objects in the table
+          format: int64
+        status:
+          type: string
+          description: Table status
+        lastUpdated:
+          type: string
+          description: Last updated time
+          format: date-time
+      description: Table information
+    TableAttributeMapping:
+      required:
+        - sourceAttribute
+        - targetAttributeId
+      type: object
+      properties:
+        sourceAttribute:
+          type: string
+          description: Source attribute
+        targetAttributeId:
+          type: string
+          description: Target attribute
+      description: Schema for mapping table attributes from source to target
+    TableContextType:
+      type: string
+      enum:
+        - Other
+        - User
+        - TI_ips
+        - TI_domains
+    TableCreateContextType:
+      type: string
+      description: A valid context type for creating a table
+      enum:
+        - Other
+        - User
+    TableCreateDto:
+      required:
+        - name
+        - contextType
+        - source
+      type: object
+      properties:
+        name:
+          type: string
+          description: Table display name
+        contextType:
+          $ref: '#/components/schemas/TableCreateContextType'
+        source:
+          $ref: '#/components/schemas/TableCreateLoaderType'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateAttribute'
+          description: Table metadata attributes
+      description: JSON schema for creating a table
+    TableCreateLoaderType:
+      type: string
+      description: The vendor from which the table will be sourced
+      enum:
+        - Custom
+    TableFieldDef:
+      required:
+        - id
+        - displayName
+        - type
+        - isKey
+      type: object
+      properties:
+        id:
+          type: string
+          description: Field ID
+        displayName:
+          type: string
+          description: Field display name
+        type:
+          type: string
+          description: Field data type
+        isKey:
+          type: boolean
+          description: Indicates whether the field is a key for the table
+      description: Schema for the table metadata
+    TableUploadCsvResponse:
+      required:
+        - trackerId
+        - csvEntries
+        - totalDuplicates
+        - totalIgnoredMissingKey
+      type: object
+      properties:
+        trackerId:
+          type: string
+          description: Tracker ID for an upload operation
+        csvEntries:
+          type: integer
+          description: Number of data objects uploaded
+          format: int64
+        totalDuplicates:
+          type: integer
+          description: Number of duplicates
+          format: int64
+        totalIgnoredMissingKey:
+          type: integer
+          description: Number of malformed objects
+          format: int64
+      description: Response schema for a table CSV file upload
+    TableUploadJsonResponse:
+      required:
+        - trackerId
+        - jsonEntries
+        - totalDuplicates
+        - totalIgnoredMissingKey
+      type: object
+      properties:
+        trackerId:
+          type: string
+          description: Tracker ID for an upload operation
+        jsonEntries:
+          type: integer
+          description: Number of JSON entries
+          format: int64
+        totalDuplicates:
+          type: integer
+          description: Number of duplicates
+          format: int64
+        totalIgnoredMissingKey:
+          type: integer
+          description: Number of malformed objects
+          format: int64
+      description: Response schema for a table JSON upload
+    TableUploadOperation:
+      type: string
+      description: Options for how data should be uploaded to an existing table
+      enum:
+        - append
+        - replace
+    TableUploadRequest:
+      required:
+        - operation
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Map_String'
+          description: String data
+        operation:
+          $ref: '#/components/schemas/TableUploadOperation'
+      description: Schema for a table upload request
+    TableUploadRequestForm:
+      required:
+        - operation
+        - file
+      type: object
+      properties:
+        sourceAttributes:
+          type: array
+          items:
+            type: string
+          description: Enter source attributes that match the column names, as defined
+            in the header row of the CSV file.
+        targetAttributeIds:
+          type: array
+          items:
+            type: string
+          description: Enter target attributes that will be mapped to the source attributes.
+        operation:
+          type: string
+          description: Enter an operation to indicate how to handle the records from
+            the CSV file. Options include 'append', which adds new records to the
+            existing records, or 'replace', which replaces the existing records.
+        file:
+          type: string
+          description: Select a CSV file that contains the new records.
+          format: binary
+      description: Schema for a table CSV upload request form
+    TableUploadStatus:
+      required:
+        - uploadStatus
+        - totalUploaded
+        - totalErrors
+      type: object
+      properties:
+        uploadStatus:
+          $ref: '#/components/schemas/UploadStatus'
+        totalUploaded:
+          type: integer
+          description: Total uploaded
+          format: int64
+        totalErrors:
+          type: integer
+          description: Total errors
+          format: int64
+      description: Response schema for a track ingestion request
+    TableWithUrl:
+      required:
+        - url
+        - table
+      type: object
+      properties:
+        url:
+          type: string
+          description: Table URL path
+        table:
+          $ref: '#/components/schemas/Table'
+      description: URL of the table with its information
+    TimestampContextValue:
+      required:
+        - timestampValue
+      type: object
+      properties:
+        timestampValue:
+          type: string
+          format: date-time
+    TrueBoolContextValue:
+      type: object
+    UploadStatus:
+      type: string
+      description: Upload status
+      enum:
+        - pending
+        - inProgress
+        - completed
+        - error
+    ErrorInfo:
+      required:
+        - code
+        - message
+        - messageParams
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error message code
+        message:
+          type: string
+          description: Error message text
+        messageParams:
+          $ref: '#/components/schemas/Map_String'
+        fields:
+          type: array
+          items:
+            type: string
+          description: Error message fields
+      description: Schema for error message details
+    HttpErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorInfo'
+        traceId:
+          type: string
+          description: Tracing ID
+      description: Response schema for errors
+    Map_String:
+      type: object
+      additionalProperties:
+        type: string
+  responses:
+    '400':
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpErrorResponse'
+    '401':
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpErrorResponse'
+    '403':
+      description: Permission Denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpErrorResponse'
+    '404':
+      description: Object Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpErrorResponse'
+    '409':
+      description: Feature is not enabled for subscription
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpErrorResponse'
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: oauth2
+      description: To access this endpoint, you must have an API key with Manage Context
+        Collectors permissions.
+      flows:
+        clientCredentials:
+          tokenUrl: auth/v1/token
+          scopes: {}
+security:
+  - oAuth2ClientCredentials: []
