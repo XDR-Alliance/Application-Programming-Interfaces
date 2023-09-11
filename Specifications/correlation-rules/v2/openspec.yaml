@@ -1,0 +1,1327 @@
+openapi: 3.0.1
+info:
+  title: Correlation Rules
+  version: v1
+servers:
+  - url: https://api.us-west.exabeam.cloud
+  - url: https://api.us-east.exabeam.cloud
+  - url: https://api.sg.exabeam.cloud
+  - url: https://api.jp.exabeam.cloud
+  - url: https://api.eu.exabeam.cloud
+  - url: https://api.au.exabeam.cloud
+  - url: https://api.ca.exabeam.cloud
+security:
+- oAuth2ClientCredentials: []
+paths:
+  /correlation-rules/v2/rules:
+    get:
+      tags:
+        - Correlation Rules
+      summary: Get a list of all correlation rules
+      description: Returns a list of all existing correlation rules.
+      operationId: correlation-get-all-rules
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleDetail'
+              examples:
+                Get All Rules Example:
+                  description: Get All Rules Example
+                  value:
+                    - id: 4e775ff5-78c1-4b2d-81fd-26be2632f042
+                      name: Rule triggered when a certain field does not match values in the list
+                      enabled: true
+                      description: Rule is triggered when none of the defined values are present.
+                      severity: none
+                      author: Admin
+                      lastModifier: Standard User
+                      createdAt: 2023-06-25T14:48:00.000Z
+                      updatedAt: 2023-06-26T14:48:00.000Z
+                      autoDisabled: false
+                      lastTriggeredAt: 2023-06-28T12:10:00.000Z
+                      timesTriggered: 5
+                      timesSuppressed: 0
+                      sequencesConfig:
+                        sequences:
+                          - name: 1st Sequence - not in the list
+                            query: vendor:"Exabeam"
+                            condition:
+                              groupByOption: false
+                              functionType: average
+                              subject: field
+                              field: bytes
+                              operator: more_than
+                              value: "5"
+                              time: 5
+                              unit: minutes
+                          - name: 2nd Sequence - not in the list
+                            query: vendor:"Exabeam"
+                            condition:
+                              groupByOption: false
+                              functionType: value
+                              subject: field
+                              field: dest_ip
+                              operator: not_in
+                              value: "0.0.0.0,1.1.1.1"
+                              time: 10
+                              unit: minutes
+                        commonProperties:
+                          groupBy: [ ]
+                          time: 16
+                          unit: minutes
+                        outcomes:
+                          sendAlertTriage: true
+                          alertTriage:
+                            name: Multi sequence alert triage
+                    - id: 1ecc5e4f-df36-44ee-8ea9-8dfe6f6ecead
+                      name: Rule triggered event count is more than threshold
+                      enabled: true
+                      description: Rule is triggered when event count is more than the
+                        threshold within the specified time period.
+                      severity: none
+                      author: Admin
+                      lastModifier: Standard User
+                      createdAt: 2023-06-21T14:48:00.000Z
+                      updatedAt: 2023-06-22T14:48:00.000Z
+                      autoDisabled: false
+                      lastTriggeredAt: 2023-06-26T12:10:00.000Z
+                      timesTriggered: 5
+                      timesSuppressed: 0
+                      sequencesConfig:
+                        sequences:
+                          - query: vendor:"Exabeam"
+                            condition:
+                              groupByOption: false
+                              functionType: count
+                              subject: event
+                              operator: more_than
+                              value: "5"
+                              time: 10
+                              unit: minutes
+                        outcomes:
+                          sendAlertTriage: true
+                          alertTriage:
+                            name: alert_count_event_more_than
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Correlation Rules
+      summary: 'Create a new correlation rule'
+      description: Create a new correlation rule
+      operationId: correlation-create-rule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleAddRequest'
+            examples:
+              Generic Query without any filter in rule trigger condition.:
+                summary: Rule with single sequence and no conditions in the query
+                description: |
+                 Rule is triggered when any events match the search query. 
+                value:
+                  name: Single sequence rule
+                  enabled: false
+                  description: Rule is triggered when any event match the sequence
+                    query
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: GenericQuery-Alert
+              Rule with event count more than threshold in sequence:
+                summary: Event count
+                description: |
+                  Rule is triggered when event count is more than the threshold with the specified time period.
+                  In this example, the rule is configured to trigger when the event count is more than 5 in a 10 minute time period.
+                value:
+                  name: Rule with event count more than threshold
+                  enabled: true
+                  description: Rule is triggered when event count is more than the
+                    threshold within the specified time period.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: count
+                          subject: event
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_count_event_more_than
+              Rule with Unique Count of field more than Threshold in sequence:
+                summary: Unique field count
+                description: |
+                  Rule is triggered when the unique field count is more than the threshold within the specified time period.
+                  In this example, if Unique Count of field db_user more than 5 in a 10 minute time interval then rule will be triggered.
+                value:
+                  name: Rule with unique field count more than threshold
+                  enabled: true
+                  description: Rule is triggered when the unique field count is more
+                    than the threshold within the specified time period.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: unique_count
+                          subject: field
+                          field: db_user
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_unique_count_field_value_more_than
+              Rule with sum of field more than Threshold in sequence:
+                summary: Numeric field value aggregate
+                description: |
+                  Rule is triggered when the numeric field aggregation is more than the threshold within the specified time period.
+                  In this example, rule is triggered when the aggregate of the bytes field is more than 5 within a 10 minute time period.
+                value:
+                  name: Rule with numeric field sum more than threshold
+                  enabled: true
+                  description: Rule is triggered when the field sum is more than
+                    threshold within the specified time interval.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: sum
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_sum_field_value_more_than
+              Rule with max of field more than Threshold in sequence:
+                summary: Min/Max of numeric field value
+                description: |
+                  Rule is triggered when the field value exceeds the threshold within the specified time period.
+                  In this example, rule is triggered when field byte value is more than 5 within a 10 minute time period.
+                value:
+                  name: Rule with field value more than the threshold
+                  enabled: true
+                  description: Rule is triggered when the field value exceeds the
+                    threshold within specifed time period.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: max
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_max_field_value_more_than
+              Rule with average of field more than threshold in sequence:
+                summary: Average numeric field value
+                description: |
+                  Rule is triggered when the average field value is more than the threshold within the specified time period.
+                  In this example, rule is triggered if the average value of field bytes is more than 5 within a 10 minute time period.
+                value:
+                  name: Rule with average field value more than threshold
+                  enabled: true
+                  description: Rule is triggered when the average field value is more than
+                   the threshold within the specified time period.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: average
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_average_field_value_more_than
+              Rule with value of field present in provided values in sequence:
+                summary: Field value not in the list of provided values
+                description: |
+                  Rule is triggered whenever the field value is not present in the provided list.
+                  In this example, rule is triggered if the dest_ip field value does not match 0.0.0.0 or 1.1.1.1.
+                value:
+                  name: Field value is not present in provided values
+                  enabled: true
+                  description: Rule is triggered whenever field value is not
+                    present in the provided values.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: value
+                          subject: field
+                          field: dest_ip
+                          operator: not_in
+                          value: "0.0.0.0,1.1.1.1"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_exclude_list_user_provided
+              Rule with more than one sequence:
+                summary: Rule with more than one sequence
+                description: |
+                  Rule is triggered when the conditions of both sequences are met.
+                  In this example, the rule is triggered if the average bytes field value is more than 5 in 5 minutes and the dest_ip field value does not match 0.0.0.0 or 1.1.1.1.
+                value:
+                  name: Field values are not present in the provided values and average thresholds are exceeded
+                  enabled: true
+                  description: Rule is triggered when field values are not present in the provided values and average thresholds are exceeded
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - name: 1st Sequence - not in the list
+                        query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: average
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 5
+                          unit: minutes
+                      - name: 2nd Sequence - not in the list
+                        query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: value
+                          subject: field
+                          field: dest_ip
+                          operator: not_in
+                          value: "0.0.0.0,1.1.1.1"
+                          time: 10
+                          unit: minutes
+                    commonProperties:
+                      groupBy: []
+                      time: 16
+                      unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: Multi sequence alert triage
+              Generic Query without any filter in rule trigger condition with email outcome.:
+                summary: Sequence with email outcome
+                description: |
+                  Rule is triggered when any events match the search query. Email is sent whenever rule is triggered.
+                value:
+                  name: Rule sequence with email outcome
+                  enabled: false
+                  description:  Rule is triggered when any events match the search query.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      sendEmail: true
+                      email:
+                        subject: Rule Triggered for Single Sequence
+                        recipients:
+                          - no-reply@exabeam.com
+                        description: Email configuration description
+              Generic Query without any filter in rule trigger condition with case outcome.:
+                summary: Sequence with case outcome
+                description: |
+                  Rule is triggered when any events match the search query. A case is created whenever rule is triggered.
+                value:
+                  name: Sequence with case outcome
+                  enabled: false
+                  description: Rule is triggered when any of the events match search query. Case is created whenever rule is triggered.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      createCase: true
+                      case:
+                        description: Rule triggered for single sequence
+              Generic Query without any filter in rule trigger condition with alert outcome.:
+                summary: Rule sequence with alert outcome
+                description: |
+                  Rule is triggered when any events match the search query. An alert is sent whenever rule is triggered.
+                value:
+                  name: Sequence with alert outcome
+                  enabled: false
+                  description: Rule is triggered when any events match the search query. An alert is sent whenever rule is triggered.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: Rule Triggered for Single Sequence
+        required: true
+      responses:
+        "201":
+          description: Success
+          headers:
+            location:
+              schema:
+                type: string
+                format: uri
+              description: URI for newly created rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleDetail'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+  /correlation-rules/v2/rules/{rule-id}:
+    get:
+      tags:
+        - Correlation Rules
+      summary: Get correlation rule details
+      description: Return the details of a specific correlation rule.
+      operationId: correlation-get-rule-by-id
+      parameters:
+        - name: rule-id
+          in: path
+          description: Correlation rule id
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 016dbc1d-a727-43df-a143-9546dcc81a5a
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleDetail'
+              example:
+                id: 4e775ff5-78c1-4b2d-81fd-26be2632f042
+                name: Rule with more than one sequence that triggers when the conditions of both sequences are met.
+                enabled: true
+                description: Rule is triggered when the conditions of both sequences are met.
+                  In this example, the rule is triggered if the average bytes field value is more than 5 in 5 minutes and the dest_ip field value does not match 0.0.0.0 or 1.1.1.1.
+                severity: none
+                author: Admin
+                lastModifier: Standard User
+                createdAt: 2023-06-25T14:48:00.000Z
+                updatedAt: 2023-06-26T14:48:00.000Z
+                autoDisabled: false
+                lastTriggeredAt: 2023-06-28T12:10:00.000Z
+                timesTriggered: 5
+                timesSuppressed: 0
+                sequencesConfig:
+                  sequences:
+                    - name: 1st Sequence - not in the list
+                      query: vendor:"Exabeam"
+                      condition:
+                        groupByOption: false
+                        functionType: average
+                        subject: field
+                        field: bytes
+                        operator: more_than
+                        value: "5"
+                        time: 5
+                        unit: minutes
+                    - name: 2nd Sequence - not in the list
+                      query: vendor:"Exabeam"
+                      condition:
+                        groupByOption: false
+                        functionType: value
+                        subject: field
+                        field: dest_ip
+                        operator: not_in
+                        value: "0.0.0.0,1.1.1.1"
+                        time: 10
+                        unit: minutes
+                  commonProperties:
+                    groupBy: []
+                    time: 16
+                    unit: minutes
+                  outcomes:
+                    sendAlertTriage: true
+                    alertTriage:
+                      name: Multi sequence alert triage
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+    put:
+      tags:
+        - Correlation Rules
+      summary: 'Update a correlation rule'
+      description: Update a correlation rule
+      operationId: correlation-update-rule
+      parameters:
+        - name: rule-id
+          in: path
+          required: true
+          description: Correlation rule id
+          schema:
+            type: string
+            format: uuid
+            example: 016dbc1d-a727-43df-a143-9546dcc81a5a
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdateRequest'
+            examples:
+              Generic Query without any filter in rule trigger condition.:
+                summary: Rule with single sequence and no conditions in the query
+                description: |
+                  Rule is triggered when any of the events match the search query.
+                value:
+                  name: Single sequence rule
+                  enabled: false
+                  description: Rule is triggered when any of the events match the search query.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: GenericQuery-Alert
+              Rule with Count of events more than Threshold in sequence:
+                summary: Count of events/field
+                description: |
+                  Rule is triggered when event count is more than the threshold with the specified time period.
+                  In this example, the rule is configured to trigger when the event count is more than 5 in a 10 minute time period.
+                value:
+                  name: Rule with event count more than threshold
+                  enabled: true
+                  description: Rule is triggered when the event count is more than
+                    threshold within the specified time period.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: count
+                          subject: event
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_count_event_more_than
+              Rule with Unique Count of field more than Threshold in sequence:
+                summary: Unique field count
+                description: |
+                  Rule is triggered when the unique field count is more than the threshold within the specified time period.
+                  In this example, if Unique Count of field db_user more than 5 in a 10 minute time interval then rule will be triggered.
+                value:
+                  name: Rule with Unique Count of field more than Threshold
+                  enabled: true
+                  description: Rule will be triggered when Unique Count of field more
+                    than threshold with in a interval.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: unique_count
+                          subject: field
+                          field: db_user
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_unique_count_field_value_more_than
+              Rule with sum of field more than Threshold in sequence:
+                summary: Numeric field aggregate value
+                description: |
+                  Rule is triggered when the numeric field aggregate value is more than the threshold within the specified time period.
+                  In this example, rule is triggered when the aggregate of the bytes field is more than 5 within a 10 minute time period.
+                value:
+                  name: Rule with sum of field more than Threshold
+                  enabled: true
+                  description: Rule will be triggered when sum of field more than
+                    threshold with in a interval.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: sum
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_sum_field_value_more_than
+              Rule with max of field more than Threshold in sequence:
+                summary: Min/Max of numeric field values
+                description: |
+                  Rule is triggered when the field value exceeds the threshold within the specified time period.
+                  In this example, rule is triggered when field byte value is more than 5 within a 10 minute time period.
+                value:
+                  name: Rule triggers when max field value is more than threshold
+                  enabled: true
+                  description: Rule is triggered when the max field value is more than the 
+                    threshold within the specified time period.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: max
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_max_field_value_more_than
+              Rule with average of field more than threshold in sequence:
+                summary: Average numeric field value
+                description: |
+                  Rule is triggered when the average field value is more than the threshold within the specified time period.
+                  In this example, rule is triggered if the average value of field bytes is more than 5 within a 10 minute time period.
+                value:
+                  name: Rule with average of field more than Threshold
+                  enabled: true
+                  description: Rule will be triggered when average of field more than
+                    threshold with in a interval.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: average
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_average_field_value_more_than
+              Rule with value of field present in provided values in sequence:
+                summary: Field value is not present in list
+                description: |
+                  Rule is triggered whenever a field value is not in the provided list.
+                  In this example, rule is triggered if the dest_ip value does not match 0.0.0.0 or 1.1.1.1.
+                value:
+                  name: Rule with field value not present in provided values
+                  enabled: true
+                  description: Rule is triggered whenever value does not match any of the provided values.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: value
+                          subject: field
+                          field: dest_ip
+                          operator: not_in
+                          value: "0.0.0.0,1.1.1.1"
+                          time: 10
+                          unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_exclude_list_user_provided
+              Rule with more than one sequence:
+                summary: Rule with more than one sequence where the conditions of both sequences need to be met.
+                description: |
+                 In this example, the rule is triggered if the average bytes field value is more than 5 in 5 minutes and the dest_ip field value does not match 0.0.0.0 or 1.1.1.1.
+                value:
+                  name: Rule with value of field not present in provided values
+                  enabled: true
+                  description: Rule will be triggered whenever value of field not
+                    present in provided values.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - name: 1st Sequence - not in the list
+                        query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: average
+                          subject: field
+                          field: bytes
+                          operator: more_than
+                          value: "5"
+                          time: 5
+                          unit: minutes
+                      - name: 2nd Sequence - not in the list
+                        query: vendor:"Exabeam"
+                        condition:
+                          groupByOption: false
+                          functionType: value
+                          subject: field
+                          field: dest_ip
+                          operator: not_in
+                          value: "0.0.0.0,1.1.1.1"
+                          time: 10
+                          unit: minutes
+                    commonProperties:
+                      groupBy: [ ]
+                      time: 16
+                      unit: minutes
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: alert_exclude_list_user_provided
+              Generic Query without any filter in rule trigger condition with email outcome.:
+                summary: Rule sequence with email outcome
+                description: |
+                  Rule is triggered when any of the events match the search query. An email is sent whenever the rule is triggered.
+                value:
+                  name: Rule sequence with email outcome
+                  enabled: false
+                  description: Rule is triggered when any of the events match the search query.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      sendEmail: true
+                      email:
+                        subject: Rule Triggered for Single Sequence
+                        recipients:
+                          - no-reply@exabeam.com
+                        description: Email configuration description
+              Generic Query without any filter in rule trigger condition with case outcome.:
+                summary: Rule sequence with case outcome
+                description: |
+                   Rule is triggered when any of the events match the search query. A case is created whenever the rule is triggered.
+                value:
+                  name: Rule sequence with case outcome
+                  enabled: false
+                  description: This rule is triggered when any of the events match the search query.
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      createCase: true
+                      case:
+                        description: Rule triggered for single sequence
+              Generic Query without any filter in rule trigger condition with alert outcome.:
+                summary: Rule sequence with alert outcome
+                description: |
+                  Rule is triggered when any of the events match the search query. An alert is sent whenever the rule is triggered.
+                value:
+                  name: Rule sequence with alert outcome
+                  enabled: false
+                  description: This rule is triggered when any of the events match the search query. 
+                  severity: none
+                  sequencesConfig:
+                    sequences:
+                      - query: vendor:"Exabeam"
+                        condition:
+                          triggerOnAnyMatch: true
+                    outcomes:
+                      sendAlertTriage: true
+                      alertTriage:
+                        name: Rule Triggered for Single Sequence
+        required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleDetail'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Correlation Rules
+      summary: Delete a correlation rule
+      description: Deletes a specific correlation rule.
+      operationId: correlation-delete-rule-by-id
+      parameters:
+        - name: rule-id
+          in: path
+          description: Correlation rule id
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 016dbc1d-a727-43df-a143-9546dcc81a5a
+      responses:
+        "200":
+          description: Success
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+
+components:
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: auth/v1/token
+          scopes: {}
+  schemas:
+    RuleAddRequest:
+      type: "object"
+      required:
+        - name
+        - severity
+        - sequencesConfig
+      properties:
+        name:
+          type: "string"
+          description: Rule name
+        description:
+          type: "string"
+          description: Rule description
+        severity:
+          $ref: "#/components/schemas/Severity"
+        enabled:
+          type: "boolean"
+          default: false
+          description: Rule status
+        testMode:
+          type: "boolean"
+          default: false
+          description: Enable rule test mode
+        sequencesConfig:
+          $ref: "#/components/schemas/SequencesConfig"
+        suppressConfig:
+          $ref: "#/components/schemas/SuppressConfig"
+        delayConfig:
+          $ref: "#/components/schemas/DelayConfig"
+    RuleUpdateRequest:
+      type: "object"
+      required:
+        - name
+        - severity
+        - sequencesConfig
+      properties:
+        name:
+          type: "string"
+          description: Rule name
+        description:
+          type: "string"
+          description: Rule description
+        severity:
+          $ref: "#/components/schemas/Severity"
+        enabled:
+          type: "boolean"
+          default: false
+          description: Rule status
+        testMode:
+          type: "boolean"
+          default: false
+          description: Enable rule test mode
+        sequencesConfig:
+          $ref: "#/components/schemas/SequencesConfig"
+        suppressConfig:
+          $ref: "#/components/schemas/SuppressConfig"
+        delayConfig:
+          $ref: "#/components/schemas/DelayConfig"
+    RuleDetail:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: uuid
+        name:
+          type: "string"
+        description:
+          type: "string"
+        severity:
+          $ref: "#/components/schemas/Severity"
+        enabled:
+          type: "boolean"
+        type:
+          type: "string"
+        author:
+          type: "string"
+        lastModifier:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+        autoDisabled:
+          type: "boolean"
+        lastTriggeredAt:
+          type: "string"
+          format: "date-time"
+        timesTriggered:
+          type: "integer"
+          format: "int64"
+        timesSuppressed:
+          type: "integer"
+          format: "int64"
+        sequencesConfig:
+          $ref: "#/components/schemas/SequencesConfig"
+        testMode:
+          type: "boolean"
+        suppressConfig:
+          $ref: "#/components/schemas/SuppressConfig"
+        delayConfig:
+          $ref: "#/components/schemas/DelayConfig"
+    SuppressConfig:
+      type: "object"
+      description: Enable suppression of repeating rule triggers
+      default:
+        suppressOption: false
+      properties:
+        suppressOption:
+          type: "boolean"
+          default: false
+          description: Enable repeating rule triggers
+        suppressTime:
+          type: "integer"
+          format: "int32"
+          description: suppressTime numeric value (required when suppressOption is enabled) 
+          minimum: 1
+        suppressUnit:
+          $ref: "#/components/schemas/SuppressTimeUnit"
+    DelayConfig:
+      type: "object"
+      description: Enable rule delay evaluation. Default delay is 7 minutes if delay is not enabled.
+      default:
+        delay : false
+      properties:
+        delay:
+          type: "boolean"
+          default: false
+          description: Enable rule evaluation delay
+        delayTimeInMinutes:
+          type: "integer"
+          format: "int32"
+          minimum: 7
+          maximum: 180
+          description: Rule evaluation delay time. Allowed values between 7 to 180.
+    SequencesConfig:
+      type: "object"
+      required:
+        - sequences
+      description: Rule sequences properties
+      properties:
+        sequences:
+          type: "array"
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SequenceConfig"
+        commonProperties:
+          $ref: "#/components/schemas/CommonProperties"
+        outcomes:
+          $ref: "#/components/schemas/Outcomes"
+    SequenceConfig:
+      type: "object"
+      required:
+        - condition
+        - query
+      properties:
+        name:
+          type: "string"
+          description: Sequence name
+        query:
+          type: "string"
+          description: EQL Query for the sequence evaluation
+        condition:
+          $ref: "#/components/schemas/SequenceCondition"
+    SequenceCondition:
+      required:
+        - triggerOnAnyMatch
+      description: Trigger sequence conditions
+      type: "object"
+      properties:
+        triggerOnAnyMatch:
+          type: boolean
+          description: Configuration for SequenceCondition. If triggerOnAnyMatch is true then
+            type should be AnyMatchSequenceRuleCondition else it will be DefinedSequenceCondition
+      oneOf:
+        - $ref: '#/components/schemas/DefinedSequenceCondition'
+        - $ref: '#/components/schemas/AnyMatchSequenceCondition'
+      discriminator:
+        propertyName: triggerOnAnyMatch
+        mapping:
+          true: '#/components/schemas/AnyMatchSequenceCondition'
+          false: '#/components/schemas/DefinedSequenceCondition'
+    AnyMatchSequenceCondition:
+      title: AnyMatch Sequence Condition
+      type: object
+      description: >
+        Trigger sequence when rule evaluation matches any events
+      required:
+        - triggerOnAnyMatch
+      properties:
+        triggerOnAnyMatch:
+          type: boolean
+    DefinedSequenceCondition:
+      title: Defined Sequence Condition
+      description: >
+        Granular sequence condition to trigger sequence based on customized aggregation, field value matches, etc.
+      required:
+        - functionType
+        - groupByOption
+        - operator
+        - subject
+        - time
+        - unit
+        - value
+      type: object
+      properties:
+        groupByOption:
+          type: boolean
+          description: Enable groupByOption in condition
+        groupBy:
+          type: array
+          description: GroupBy fields. GroupBy limit of three fields per sequence.
+          maxItems: 3
+          items:
+            type: string
+            description: GroupBy fields
+        functionType:
+          type: string
+          description: Sequence aggregate function
+          enum:
+            - count
+            - unique_count
+            - value
+            - max
+            - min
+            - sum
+            - average
+        subject:
+          type: string
+          description: |
+            Type of subject where functionType is matched against.
+            * For "event" subject, functionType (count,unique_count,value,max,min,sum,average) will be matched with events returned from search query.
+            * For "field" subject, functionType (count,unique_count,value,max,min,sum,average) will be matched with events returned from search query.
+          enum:
+            - event
+            - field
+        field:
+          type: string
+          description: Field used in the condition. If the subject is field, field value is mandatory. Refer Correlation Rules UI for valid field values.
+        operator:
+          type: string
+          description: Condition operator
+          enum:
+            - more_than
+            - less_than
+            - in
+            - not_in
+            - between
+            - changed
+        value:
+          type: string
+          description: Condition threshold value
+        time:
+          type: integer
+          description: Time interval value
+          format: int32
+          minimum: 1
+        unit:
+          $ref: "#/components/schemas/UnitOfTime"
+        triggerOnAnyMatch:
+          type: boolean
+    CommonProperties:
+      type: "object"
+      description: |
+        #### Common properties for all sequences.
+        * Common properties field groupBy, time, and unit should not be specified for single sequence rules.
+        * For multiple sequence rules, the common properties fields time and unit are required fields.
+      properties:
+        groupBy:
+          maxItems: 3
+          type: "array"
+          description: Common groupBy fields for all sequences. Only 3 groupBy fields are supported.
+          items:
+            type: "string"
+        time:
+          type: "integer"
+          format: "int32"
+          description: Time interval value for the rule
+          minimum: 1
+        unit:
+          $ref: "#/components/schemas/UnitOfTime"
+    Outcomes:
+      type: "object"
+      description: >
+        Outcome configuration on rule trigger. If createCase is enabled, sendAlertTriage should be disabled and vice versa.
+      properties:
+        sendEmail:
+          type: "boolean"
+          default: false
+          description: Send email on rule trigger. If this is enabled, email object has to be sent in the request.
+        createCase:
+          type: "boolean"
+          default: false
+          description: Create case on rule trigger. If this is enabled, case object has to be sent in the request.
+        sendAlertTriage:
+          type: "boolean"
+          default: false
+          description: Create alert on rule trigger. If this is enabled, alert object has to be sent in the request.
+        case:
+          $ref: "#/components/schemas/Case"
+        email:
+          $ref: "#/components/schemas/EmailOutcome"
+        alertTriage:
+          $ref: "#/components/schemas/AlertTriage"
+    Case:
+      type: "object"
+      description: If createCase is enabled, case object has to be sent in the request.
+      required:
+        - description
+      properties:
+        description:
+          description: Case name
+          type: "string"
+    EmailOutcome:
+      type: "object"
+      required:
+        - recipients
+        - subject
+      properties:
+        recipients:
+          type: "array"
+          description: Email recipients
+          minItems: 1
+          items:
+            type: "string"
+            format: email
+        subject:
+          type: "string"
+          description: Email subject
+        description:
+          type: "string"
+          description: Email description
+        attachCsv:
+          type: "boolean"
+          description: Enable CSV attachment of associated events to email
+    AlertTriage:
+      type: "object"
+      description: If sendAlertTriage is enabled, alertTriage object has to be sent in the request.
+      properties:
+        name:
+          type: "string"
+          description: Name of the alert to be created
+    UnitOfTime:
+      type: string
+      description: Timeunit
+      enum:
+        - minutes
+        - hours
+        - days
+    SuppressTimeUnit:
+      type: string
+      description: Timeunit values for suppressTime
+      default: minutes
+      enum:
+        - minutes
+        - hours
+        - days
+        - weeks
+    Severity:
+      type: string
+      description: Rule severity
+      enum:
+        - none
+        - low
+        - medium
+        - high
+        - critical
+    ErrorInfo:
+      type: object
+      description: Schema of correlation-rule error response object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+          description: Error message information
+        messageParams:
+          type: object
+          description: Additional information about the error message
+          additionalProperties:
+            type: string
+        fields:
+          type: array
+          description: Fields in the request that cause the error
+          items:
+            type: string
+    HttpErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorInfo'
+        traceId:
+          type: string
+  responses:
+    "400":
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpErrorResponse"
+    "401":
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpErrorResponse"
+    "403":
+      description: Permission Denied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpErrorResponse"
+    "404":
+      description: Object Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpErrorResponse"
+    "409":
+      description: Feature is not enabled for subscription
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpErrorResponse"
+    "500":
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpErrorResponse"
+
+x-readme:
+  explorer-enabled: true
+  proxy-enabled: true
+  samples-languages:
+    - python
+    - powershell
+    - curl
+    - go
+    - javascript
+    - java
+    - cplusplus
+    - csharp
+    - node
+    - node-simple
